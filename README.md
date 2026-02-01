@@ -2,6 +2,8 @@
 
 An interactive web experience that visualizes how much of your life you spend on social media.
 
+![Gaze Screenshot](assets/screenshot.png)
+
 ## What it does
 
 Gaze takes you through a scrolling journey that makes abstract time tangible:
