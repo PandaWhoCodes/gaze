@@ -210,10 +210,9 @@ function updateAllStats() {
   document.getElementById('yearly-days').textContent = yearlyDays;
   document.getElementById('yearly-months').textContent = yearlyMonths;
 
-  // Update year bar
+  // Year bar fill is animated via scroll, store target for animation
   const yearBarFill = document.getElementById('year-bar-fill');
-  const fillPercent = (hours / state.wakingHours) * 100;
-  yearBarFill.style.width = `${fillPercent}%`;
+  yearBarFill.dataset.targetWidth = (hours / state.wakingHours) * 100;
 
   // Update Opportunity Costs
   updateOpportunityCosts(hours);
@@ -246,9 +245,14 @@ function updateOpportunityCosts(dailyHours) {
   // Let's say "Walk across France". ~1000km. 5km/hr = 200 hours.
   const countries = Math.floor(yearlyHours / 200);
 
-  document.querySelector('#alt-books .highlight').textContent = books.toLocaleString();
-  document.querySelector('#alt-languages .highlight').textContent = languages;
-  document.querySelector('#alt-walk .highlight').textContent = countries;
+  // Update with proper pluralization
+  const booksEl = document.getElementById('alt-books');
+  const langsEl = document.getElementById('alt-languages');
+  const walkEl = document.getElementById('alt-walk');
+
+  booksEl.innerHTML = `Read <span class="highlight">${books.toLocaleString()}</span> ${books === 1 ? 'book' : 'books'}`;
+  langsEl.innerHTML = `Mastered <span class="highlight">${languages}</span> ${parseFloat(languages) === 1 ? 'language' : 'languages'}`;
+  walkEl.innerHTML = `Walked across <span class="highlight">${countries}</span> ${countries === 1 ? 'country' : 'countries'}`;
 
   // Show container if hours > 0
   const container = document.getElementById('opportunity-cost');
@@ -258,13 +262,23 @@ function updateOpportunityCosts(dailyHours) {
 }
 
 function updateMiniClocks() {
+  // Mini clocks are now animated via scroll - this just ensures they have the target value stored
   const miniClocks = document.querySelectorAll('.mini-clock-fill');
-  const angle = (state.hours / state.wakingHours) * Math.PI * 2;
-  const arcPath = describeArc(50, 50, 40, 0, angle);
-
   miniClocks.forEach(clock => {
-    clock.setAttribute('d', arcPath);
+    clock.dataset.targetAngle = (state.hours / state.wakingHours) * Math.PI * 2;
   });
+}
+
+// Helper to draw arc at a specific progress (0-1)
+function drawMiniClockArc(element, progress) {
+  const targetAngle = parseFloat(element.dataset.targetAngle) || 0;
+  const currentAngle = targetAngle * progress;
+  if (currentAngle > 0.01) {
+    const arcPath = describeArc(50, 50, 40, 0, currentAngle);
+    element.setAttribute('d', arcPath);
+  } else {
+    element.setAttribute('d', '');
+  }
 }
 
 function generateCalendar() {
@@ -277,12 +291,22 @@ function generateCalendar() {
 }
 
 function updateCalendar() {
+  // Calendar fill is now animated via scroll - store target value
   const days = document.querySelectorAll('.calendar-day');
   const fillPercent = (state.hours / state.wakingHours) * 100;
 
   days.forEach(day => {
     day.classList.add('filled');
-    day.style.setProperty('--fill', `${fillPercent}%`);
+    day.dataset.targetFill = fillPercent;
+  });
+}
+
+// Helper to set calendar fill at a specific progress (0-1)
+function setCalendarFill(progress) {
+  const days = document.querySelectorAll('.calendar-day');
+  days.forEach(day => {
+    const targetFill = parseFloat(day.dataset.targetFill) || 0;
+    day.style.setProperty('--fill', `${targetFill * progress}%`);
   });
 }
 
@@ -293,21 +317,151 @@ function updateCalendar() {
 function initScrollAnimations() {
   gsap.registerPlugin(ScrollTrigger);
 
-  // Section animations
-  const sections = ['#daily', '#weekly', '#monthly', '#yearly'];
+  // Daily section - fade in content
+  gsap.from('#daily .content > *', {
+    scrollTrigger: {
+      trigger: '#daily',
+      start: 'top 70%',
+      end: 'top 30%',
+      scrub: 1,
+    },
+    y: 50,
+    opacity: 0,
+    stagger: 0.2
+  });
 
-  sections.forEach((section) => {
-    gsap.from(`${section} .content > *`, {
-      scrollTrigger: {
-        trigger: section,
-        start: 'top 60%',
-        end: 'top 20%',
-        scrub: 1,
-      },
-      y: 50,
-      opacity: 0,
-      stagger: 0.2
+  // Daily mini-clock fill - TIME-BASED animation triggered on scroll enter
+  const dailyClockFill = document.querySelector('#daily .mini-clock-fill');
+  if (dailyClockFill) {
+    ScrollTrigger.create({
+      trigger: '#daily',
+      start: 'top 60%',
+      onEnter: () => animateMiniClockFill(dailyClockFill, 1.2),
+      onLeaveBack: () => resetMiniClockFill(dailyClockFill)
     });
+  }
+
+  // Weekly section - fade in content
+  gsap.from('#weekly .stat-text', {
+    scrollTrigger: {
+      trigger: '#weekly',
+      start: 'top 70%',
+      end: 'top 40%',
+      scrub: 1,
+    },
+    y: 50,
+    opacity: 0
+  });
+
+  // Week clocks - stagger appearance + TIME-BASED fill animation
+  const weekClocks = document.querySelectorAll('.week-clocks .mini-clock');
+  weekClocks.forEach((clock, index) => {
+    const fillPath = clock.querySelector('.mini-clock-fill');
+
+    // Scale in animation
+    gsap.from(clock, {
+      scrollTrigger: {
+        trigger: '#weekly',
+        start: 'top 70%',
+        end: 'top 30%',
+        scrub: 1
+      },
+      scale: 0,
+      opacity: 0,
+      delay: index * 0.1
+    });
+
+    // Fill animation - triggered when section enters view
+    if (fillPath) {
+      ScrollTrigger.create({
+        trigger: '#weekly',
+        start: 'top 50%',
+        onEnter: () => animateMiniClockFill(fillPath, 0.8, index * 0.15),
+        onLeaveBack: () => resetMiniClockFill(fillPath)
+      });
+    }
+  });
+
+  // Monthly section - fade in content
+  gsap.from('#monthly .stat-text, #monthly .stat-subtext', {
+    scrollTrigger: {
+      trigger: '#monthly',
+      start: 'top 70%',
+      end: 'top 40%',
+      scrub: 1,
+    },
+    y: 50,
+    opacity: 0,
+    stagger: 0.1
+  });
+
+  // Calendar - scale in
+  gsap.from('.calendar-day', {
+    scrollTrigger: {
+      trigger: '#monthly',
+      start: 'top 70%',
+      end: 'top 30%',
+      scrub: 1
+    },
+    scale: 0,
+    opacity: 0,
+    stagger: {
+      grid: [5, 7],
+      from: 'start',
+      amount: 0.5
+    }
+  });
+
+  // Calendar fill - TIME-BASED animation triggered on scroll
+  ScrollTrigger.create({
+    trigger: '#monthly',
+    start: 'top 40%',
+    onEnter: () => animateCalendarFill(1.5),
+    onLeaveBack: () => setCalendarFill(0)
+  });
+
+  // Yearly section - fade in content
+  gsap.from('#yearly .stat-text, #yearly .stat-subtext', {
+    scrollTrigger: {
+      trigger: '#yearly',
+      start: 'top 70%',
+      end: 'top 40%',
+      scrub: 1,
+    },
+    y: 50,
+    opacity: 0,
+    stagger: 0.1
+  });
+
+  // Year bar - scale in
+  gsap.from('.year-bar', {
+    scrollTrigger: {
+      trigger: '#yearly',
+      start: 'top 70%',
+      end: 'top 40%',
+      scrub: 1
+    },
+    scaleX: 0,
+    transformOrigin: 'left center'
+  });
+
+  // Year bar fill - TIME-BASED animation
+  ScrollTrigger.create({
+    trigger: '#yearly',
+    start: 'top 40%',
+    onEnter: () => {
+      gsap.fromTo('#year-bar-fill',
+        { width: '0%' },
+        {
+          width: `${(state.hours / state.wakingHours) * 100}%`,
+          duration: 1.5,
+          ease: 'power2.out'
+        }
+      );
+    },
+    onLeaveBack: () => {
+      gsap.set('#year-bar-fill', { width: '0%' });
+    }
   });
 
   // Highlight alternatives one by one
@@ -320,47 +474,33 @@ function initScrollAnimations() {
       onLeaveBack: () => item.classList.remove('active')
     });
   });
+}
 
-  // Week clocks stagger animation
-  gsap.from('.week-clocks .mini-clock', {
-    scrollTrigger: {
-      trigger: '#weekly',
-      start: 'top 60%',
-      end: 'top 30%',
-      scrub: 1
-    },
-    scale: 0,
-    opacity: 0,
-    stagger: 0.1
+// Animate mini-clock fill over time (not scroll-scrubbed)
+function animateMiniClockFill(element, duration = 1, delay = 0) {
+  const proxy = { progress: 0 };
+  gsap.to(proxy, {
+    progress: 1,
+    duration: duration,
+    delay: delay,
+    ease: 'power2.out',
+    onUpdate: () => drawMiniClockArc(element, proxy.progress)
   });
+}
 
-  // Calendar animation
-  gsap.from('.calendar-day', {
-    scrollTrigger: {
-      trigger: '#monthly',
-      start: 'top 60%',
-      end: 'top 20%',
-      scrub: 1
-    },
-    scale: 0,
-    opacity: 0,
-    stagger: {
-      grid: [5, 7],
-      from: 'start',
-      amount: 0.5
-    }
-  });
+// Reset mini-clock fill
+function resetMiniClockFill(element) {
+  element.setAttribute('d', '');
+}
 
-  // Year bar animation
-  gsap.from('.year-bar', {
-    scrollTrigger: {
-      trigger: '#yearly',
-      start: 'top 60%',
-      end: 'top 30%',
-      scrub: 1
-    },
-    scaleX: 0,
-    transformOrigin: 'left center'
+// Animate calendar fill over time
+function animateCalendarFill(duration = 1) {
+  const proxy = { progress: 0 };
+  gsap.to(proxy, {
+    progress: 1,
+    duration: duration,
+    ease: 'power2.out',
+    onUpdate: () => setCalendarFill(proxy.progress)
   });
 }
 
