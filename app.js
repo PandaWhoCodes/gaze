@@ -515,17 +515,26 @@ function initAgeInput() {
   function submitAge() {
     const age = parseInt(ageInput.value);
     if (age && age > 0 && age < state.lifeExpectancy) {
-      state.age = age;
-      state.yearsLeft = state.lifeExpectancy - age;
+      // Immediate visual feedback - disable button and show loading
+      ageSubmit.disabled = true;
+      ageSubmit.textContent = '...';
+      ageSubmit.style.opacity = '0.6';
+      ageSubmit.style.cursor = 'wait';
 
-      // Update years left display
-      document.getElementById('years-left').textContent = state.yearsLeft;
+      // Use requestAnimationFrame to let the UI update before heavy work
+      requestAnimationFrame(() => {
+        state.age = age;
+        state.yearsLeft = state.lifeExpectancy - age;
 
-      // Generate Life Grid
-      generateLifeGrid(age);
+        // Update years left display
+        document.getElementById('years-left').textContent = state.yearsLeft;
 
-      // Show remaining sections
-      showRemainingSection();
+        // Generate Life Grid (this is the slow part)
+        generateLifeGrid(age);
+
+        // Show remaining sections
+        showRemainingSection();
+      });
     }
   }
 
@@ -698,8 +707,8 @@ function updateReclaimDisplay() {
   const newFillHeight = 500 * newPercent;
   const reclaimedFillHeight = 500 * (reclaimedYears / state.yearsLeft);
 
-  // Current silhouette (stays at original)
-  document.getElementById('reclaim-fill-rect').setAttribute('y', 500 - originalFillHeight);
+  // Current silhouette (shows current slider value - responds to drag)
+  document.getElementById('reclaim-fill-rect').setAttribute('y', 500 - newFillHeight);
 
   // Reclaimed silhouette (shows the reclaimed portion in green)
   document.getElementById('reclaimed-fill-rect').setAttribute('y', 500 - reclaimedFillHeight);

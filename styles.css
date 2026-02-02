@@ -316,12 +316,18 @@ body {
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  min-width: 140px;
 }
 
-#age-submit:hover {
+#age-submit:hover:not(:disabled) {
   transform: scale(1.05);
   box-shadow: 0 0 30px var(--accent-glow);
+}
+
+#age-submit:disabled {
+  cursor: wait;
+  transform: none;
 }
 
 /* Silhouette */
@@ -418,7 +424,7 @@ body {
   border-radius: 4px;
   background: #1a1a1a;
   outline: none;
-  transform: rotate(-90deg);
+  transform: rotate(90deg);
   margin: 4rem 0;
 }
 
@@ -596,10 +602,17 @@ body {
 #life-grid-section {
     display: none; /* Initially hidden until age input */
     flex-direction: column;
+    overflow-x: hidden;
 }
 
 #life-grid-section.active {
     display: flex;
+}
+
+#life-grid-section .content {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .life-grid {
@@ -609,6 +622,8 @@ body {
     justify-content: center;
     max-width: 900px;
     margin: 2rem auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
 }
 
 .life-week {
@@ -627,6 +642,19 @@ body {
 
     .life-grid {
         gap: 2px;
+        max-width: 100%;
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .life-week {
+        width: 3px;
+        height: 3px;
+    }
+
+    .life-grid {
+        gap: 1.5px;
     }
 }
 
