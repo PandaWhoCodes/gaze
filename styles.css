@@ -676,6 +676,7 @@ body {
     overflow-x: hidden;
 }
 
+/* Desktop: Week-based grid (4160 dots) */
 .life-grid {
     display: flex;
     flex-wrap: wrap-reverse;
@@ -691,32 +692,7 @@ body {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: #333; /* Default Empty */
-    transition: transform 0.1s ease, background-color 0.5s ease;
-}
-
-@media (max-width: 600px) {
-    .life-week {
-        width: 4px;
-        height: 4px;
-    }
-
-    .life-grid {
-        gap: 2px;
-        max-width: 100%;
-        padding: 0 0.5rem;
-    }
-}
-
-@media (max-width: 380px) {
-    .life-week {
-        width: 3px;
-        height: 3px;
-    }
-
-    .life-grid {
-        gap: 1.5px;
-    }
+    background-color: #333;
 }
 
 .life-week.lived {
@@ -732,6 +708,57 @@ body {
 .life-week.free {
     background-color: #fafafa;
     opacity: 0.8;
+}
+
+/* Mobile: Year-based grid (80 boxes for better performance) */
+@media (max-width: 768px) {
+    .life-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 6px;
+        max-width: 350px;
+        flex-wrap: unset;
+    }
+
+    .life-grid.years-grid {
+        /* Ensure grid layout for years */
+    }
+}
+
+.life-year {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background-color: #333;
+}
+
+.life-year.lived {
+    background-color: #555;
+    opacity: 0.4;
+}
+
+.life-year.scroll {
+    background-color: var(--accent);
+    box-shadow: 0 0 4px var(--accent-glow);
+}
+
+.life-year.free {
+    background-color: #fafafa;
+    opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+    .life-grid {
+        gap: 5px;
+        max-width: 320px;
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .life-grid {
+        gap: 4px;
+        max-width: 280px;
+    }
 }
 
 .grid-subtext {

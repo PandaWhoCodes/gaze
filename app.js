@@ -601,7 +601,77 @@ function generateLifeGrid(currentAge) {
   const grid = document.getElementById('life-grid');
   grid.innerHTML = '';
 
-  // Total weeks in 80 years (approx)
+  // Check if mobile (use years for better performance) or desktop (use weeks)
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    generateYearsGrid(grid, currentAge);
+  } else {
+    generateWeeksGrid(grid, currentAge);
+  }
+}
+
+// Mobile-optimized: 80 year boxes instead of 4160 week dots
+function generateYearsGrid(grid, currentAge) {
+  grid.classList.add('years-grid');
+
+  // Update text for years view
+  document.getElementById('life-grid-title').textContent = 'Your Life in Years';
+  document.getElementById('life-grid-subtitle').textContent = 'Each box is one year of your life.';
+  document.getElementById('grid-scroll-unit').textContent = 'years';
+
+  const totalYears = 80;
+  const remainingYears = Math.max(0, totalYears - currentAge);
+
+  // Calculate scroll years based on percentage of WAKING hours
+  const percentScroll = state.hours / state.wakingHours;
+  const totalScrollYears = Math.round(remainingYears * percentScroll);
+
+  // Update stats
+  document.getElementById('grid-scroll-time').textContent = totalScrollYears.toLocaleString();
+
+  const fragment = document.createDocumentFragment();
+
+  // Generate 80 year boxes (grid displays in normal order, 0 = top-left)
+  for (let i = 0; i < totalYears; i++) {
+    const box = document.createElement('div');
+    box.className = 'life-year';
+
+    if (i < currentAge) {
+      box.classList.add('lived');
+    } else {
+      const yearsUntilEnd = totalYears - 1 - i;
+      if (yearsUntilEnd < totalScrollYears) {
+        box.classList.add('scroll');
+      } else {
+        box.classList.add('free');
+      }
+    }
+    fragment.appendChild(box);
+  }
+  grid.appendChild(fragment);
+
+  // Simple fade-in animation (no heavy stagger on 80 elements)
+  gsap.from('.life-year', {
+    opacity: 0,
+    duration: 0.8,
+    ease: 'power2.out',
+    stagger: {
+      amount: 0.5,
+      from: 'start'
+    }
+  });
+}
+
+// Desktop: Full 4160 week dots
+function generateWeeksGrid(grid, currentAge) {
+  grid.classList.remove('years-grid');
+
+  // Update text for weeks view
+  document.getElementById('life-grid-title').textContent = 'Your Life in Weeks';
+  document.getElementById('life-grid-subtitle').textContent = 'Each dot is one week of your life.';
+  document.getElementById('grid-scroll-unit').textContent = 'weeks';
+
   const totalWeeks = 80 * 52;
   const ageInWeeks = currentAge * 52;
   const remainingWeeks = totalWeeks - ageInWeeks;
@@ -611,7 +681,7 @@ function generateLifeGrid(currentAge) {
   const totalScrollWeeks = Math.round(remainingWeeks * percentScroll);
 
   // Update stats
-  document.getElementById('grid-scroll-weeks').textContent = totalScrollWeeks.toLocaleString();
+  document.getElementById('grid-scroll-time').textContent = totalScrollWeeks.toLocaleString();
 
   const fragment = document.createDocumentFragment();
 
@@ -650,10 +720,9 @@ function generateLifeGrid(currentAge) {
     opacity: 0,
     stagger: {
       amount: 1,
-      from: "end" // Animate from top (end) to bottom? Or random.
+      from: "end"
     }
   });
-
 }
 
 function showRemainingSection() {
