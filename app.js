@@ -458,13 +458,24 @@ function updateScrollyCounter(stepName) {
   }
 
   // Animate the counter
+  // For daily/weekly, preserve 0.5 increments; for larger values, round to whole numbers
+  const useDecimals = stepName === 'daily' || stepName === 'weekly';
+  const snapValue = useDecimals ? 0.5 : 1;
+
   gsap.to(numberEl, {
     textContent: value,
     duration: 0.8,
     ease: 'power2.out',
-    snap: { textContent: 1 },
+    snap: { textContent: snapValue },
     onUpdate: function() {
-      numberEl.textContent = Math.round(this.targets()[0].textContent).toLocaleString();
+      const rawValue = parseFloat(this.targets()[0].textContent);
+      if (useDecimals) {
+        // Round to 0.5 and format (show .5 only when needed)
+        const rounded = Math.round(rawValue * 2) / 2;
+        numberEl.textContent = rounded % 1 === 0 ? rounded.toLocaleString() : rounded.toFixed(1);
+      } else {
+        numberEl.textContent = Math.round(rawValue).toLocaleString();
+      }
     }
   });
 
