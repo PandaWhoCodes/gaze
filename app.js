@@ -568,11 +568,11 @@ function initAgeInput() {
   function submitAge() {
     const age = parseInt(ageInput.value);
     if (age && age > 0 && age < state.lifeExpectancy) {
-      // Immediate visual feedback - disable button and show loading
+      // Immediate visual feedback - show scroll instruction
       ageSubmit.disabled = true;
-      ageSubmit.textContent = '...';
-      ageSubmit.style.opacity = '0.6';
-      ageSubmit.style.cursor = 'wait';
+      ageSubmit.textContent = 'Scroll down ↓';
+      ageSubmit.style.opacity = '0.7';
+      ageSubmit.style.cursor = 'default';
 
       // Use requestAnimationFrame to let the UI update before heavy work
       requestAnimationFrame(() => {
