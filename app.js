@@ -7,6 +7,33 @@ const state = {
   lifeExpectancy: 77
 };
 
+// ============================================
+// VIEWPORT HEIGHT FIX (Mobile browser nav bars)
+// ============================================
+
+function setVhProperty() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Debounce helper
+function debounce(fn, ms) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+// Set on load and resize
+setVhProperty();
+window.addEventListener('resize', debounce(() => {
+  setVhProperty();
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.refresh();
+  }
+}, 150));
+
 // DOM Elements
 const clock = document.getElementById('clock');
 const clockFill = document.getElementById('clock-fill');
@@ -68,6 +95,12 @@ function initClock() {
 
     // Update text (just the number)
     clockText.textContent = state.hours;
+
+    // Sync fallback input
+    const fallbackInput = document.getElementById('clock-fallback-input');
+    if (fallbackInput && document.activeElement !== fallbackInput) {
+      fallbackInput.value = state.hours;
+    }
 
     // Update tick marks (highlight active ticks)
     updateTickMarks();
@@ -144,6 +177,17 @@ function initClock() {
 
   // Initialize with 0
   updateClock(0);
+
+  // Mobile fallback input
+  const fallbackInput = document.getElementById('clock-fallback-input');
+  if (fallbackInput) {
+    fallbackInput.addEventListener('input', (e) => {
+      const hours = parseFloat(e.target.value) || 0;
+      const clampedHours = Math.min(state.wakingHours, Math.max(0, hours));
+      const angle = (clampedHours / state.wakingHours) * Math.PI * 2;
+      updateClock(angle);
+    });
+  }
 }
 
 function describeArc(x, y, radius, startAngle, endAngle) {
@@ -232,38 +276,36 @@ function updateAllStats() {
 function updateOpportunityCosts(dailyHours) {
   const yearlyHours = dailyHours * 365;
 
-  // 1 book ~ 10 hours (60,000 words at 250wpm = 4 hours, but let's be generous for study/dense books)
-  // Actually Pudding style uses "average reader" stats. 
-  // Let's say 7 hours per book.
-  const books = Math.floor(yearlyHours / 7);
+  // Research-backed calculations:
+  // 1 book: 90,000 words avg / 238 wpm = ~6.3 hours (Brysbaert, 2019)
+  const books = Math.floor(yearlyHours / 6);
 
-  // 1 language ~ 480 hours (FSI elementary proficiency)
-  const languages = (yearlyHours / 480).toFixed(1);
+  // 1 language to conversational: ~600 hours (FSI Category I languages)
+  const languages = (yearlyHours / 600).toFixed(1);
 
-  // Walk across country ~ 3 months @ 8 hours/day = ~700 hours?
-  // PCT is 5 months. 
-  // Let's say "Walk across France". ~1000km. 5km/hr = 200 hours.
-  const countries = Math.floor(yearlyHours / 200);
+  // Camino de Santiago: ~800km at 25km/day walking 6-8 hours = ~200 hours
+  const caminoTimes = Math.floor(yearlyHours / 200);
 
-  // Update with proper pluralization
+  // Update with proper content
   const booksEl = document.getElementById('alt-books');
   const langsEl = document.getElementById('alt-languages');
   const walkEl = document.getElementById('alt-walk');
+  const caminoTimesEl = document.getElementById('alt-camino-times');
 
-  booksEl.innerHTML = `Read <span class="highlight">${books.toLocaleString()}</span> ${books === 1 ? 'book' : 'books'}`;
-  langsEl.innerHTML = `Mastered <span class="highlight">${languages}</span> ${parseFloat(languages) === 1 ? 'language' : 'languages'}`;
-  walkEl.innerHTML = `Walked across <span class="highlight">${countries}</span> ${countries === 1 ? 'country' : 'countries'}`;
-
-  // Show container if hours > 0
-  const container = document.getElementById('opportunity-cost');
-  if (dailyHours > 0) {
-    container.classList.add('visible');
+  if (booksEl) {
+    booksEl.innerHTML = `Read <span class="highlight">${books.toLocaleString()}</span> ${books === 1 ? 'book' : 'books'}`;
+  }
+  if (langsEl) {
+    langsEl.innerHTML = `Learned <span class="highlight">${languages}</span> ${parseFloat(languages) === 1 ? 'language' : 'languages'} to conversational level`;
+  }
+  if (walkEl && caminoTimesEl) {
+    caminoTimesEl.textContent = caminoTimes;
   }
 }
 
 function updateMiniClocks() {
-  // Mini clocks are now animated via scroll - this just ensures they have the target value stored
-  const miniClocks = document.querySelectorAll('.mini-clock-fill');
+  // Store target angle for all mini clocks (used by scroll-triggered animations)
+  const miniClocks = document.querySelectorAll('.mini-clock-fill, .scrolly-clock-fill');
   miniClocks.forEach(clock => {
     clock.dataset.targetAngle = (state.hours / state.wakingHours) * Math.PI * 2;
   });
@@ -311,160 +353,16 @@ function setCalendarFill(progress) {
 }
 
 // ============================================
-// SCROLL ANIMATIONS
+// SCROLL ANIMATIONS (Pudding-style Scrollytelling)
 // ============================================
 
 function initScrollAnimations() {
   gsap.registerPlugin(ScrollTrigger);
 
-  // Daily section - fade in content
-  gsap.from('#daily .content > *', {
-    scrollTrigger: {
-      trigger: '#daily',
-      start: 'top 70%',
-      end: 'top 30%',
-      scrub: 1,
-    },
-    y: 50,
-    opacity: 0,
-    stagger: 0.2
-  });
+  // Initialize scrollytelling
+  initScrollytelling();
 
-  // Daily mini-clock fill - TIME-BASED animation triggered on scroll enter
-  const dailyClockFill = document.querySelector('#daily .mini-clock-fill');
-  if (dailyClockFill) {
-    ScrollTrigger.create({
-      trigger: '#daily',
-      start: 'top 60%',
-      onEnter: () => animateMiniClockFill(dailyClockFill, 1.2),
-      onLeaveBack: () => resetMiniClockFill(dailyClockFill)
-    });
-  }
-
-  // Weekly section - fade in content
-  gsap.from('#weekly .stat-text', {
-    scrollTrigger: {
-      trigger: '#weekly',
-      start: 'top 70%',
-      end: 'top 40%',
-      scrub: 1,
-    },
-    y: 50,
-    opacity: 0
-  });
-
-  // Week clocks - stagger appearance + TIME-BASED fill animation
-  const weekClocks = document.querySelectorAll('.week-clocks .mini-clock');
-  weekClocks.forEach((clock, index) => {
-    const fillPath = clock.querySelector('.mini-clock-fill');
-
-    // Scale in animation
-    gsap.from(clock, {
-      scrollTrigger: {
-        trigger: '#weekly',
-        start: 'top 70%',
-        end: 'top 30%',
-        scrub: 1
-      },
-      scale: 0,
-      opacity: 0,
-      delay: index * 0.1
-    });
-
-    // Fill animation - triggered when section enters view
-    if (fillPath) {
-      ScrollTrigger.create({
-        trigger: '#weekly',
-        start: 'top 50%',
-        onEnter: () => animateMiniClockFill(fillPath, 0.8, index * 0.15),
-        onLeaveBack: () => resetMiniClockFill(fillPath)
-      });
-    }
-  });
-
-  // Monthly section - fade in content
-  gsap.from('#monthly .stat-text, #monthly .stat-subtext', {
-    scrollTrigger: {
-      trigger: '#monthly',
-      start: 'top 70%',
-      end: 'top 40%',
-      scrub: 1,
-    },
-    y: 50,
-    opacity: 0,
-    stagger: 0.1
-  });
-
-  // Calendar - scale in
-  gsap.from('.calendar-day', {
-    scrollTrigger: {
-      trigger: '#monthly',
-      start: 'top 70%',
-      end: 'top 30%',
-      scrub: 1
-    },
-    scale: 0,
-    opacity: 0,
-    stagger: {
-      grid: [5, 7],
-      from: 'start',
-      amount: 0.5
-    }
-  });
-
-  // Calendar fill - TIME-BASED animation triggered on scroll
-  ScrollTrigger.create({
-    trigger: '#monthly',
-    start: 'top 40%',
-    onEnter: () => animateCalendarFill(1.5),
-    onLeaveBack: () => setCalendarFill(0)
-  });
-
-  // Yearly section - fade in content
-  gsap.from('#yearly .stat-text, #yearly .stat-subtext', {
-    scrollTrigger: {
-      trigger: '#yearly',
-      start: 'top 70%',
-      end: 'top 40%',
-      scrub: 1,
-    },
-    y: 50,
-    opacity: 0,
-    stagger: 0.1
-  });
-
-  // Year bar - scale in
-  gsap.from('.year-bar', {
-    scrollTrigger: {
-      trigger: '#yearly',
-      start: 'top 70%',
-      end: 'top 40%',
-      scrub: 1
-    },
-    scaleX: 0,
-    transformOrigin: 'left center'
-  });
-
-  // Year bar fill - TIME-BASED animation
-  ScrollTrigger.create({
-    trigger: '#yearly',
-    start: 'top 40%',
-    onEnter: () => {
-      gsap.fromTo('#year-bar-fill',
-        { width: '0%' },
-        {
-          width: `${(state.hours / state.wakingHours) * 100}%`,
-          duration: 1.5,
-          ease: 'power2.out'
-        }
-      );
-    },
-    onLeaveBack: () => {
-      gsap.set('#year-bar-fill', { width: '0%' });
-    }
-  });
-
-  // Highlight alternatives one by one
+  // Highlight alternatives one by one in the opportunity step
   gsap.utils.toArray('.alternative-item').forEach((item, i) => {
     ScrollTrigger.create({
       trigger: item,
@@ -474,6 +372,150 @@ function initScrollAnimations() {
       onLeaveBack: () => item.classList.remove('active')
     });
   });
+}
+
+// Scrollytelling step management
+function initScrollytelling() {
+  const steps = gsap.utils.toArray('.scrolly-step');
+  const vizStates = document.querySelectorAll('.viz-state');
+
+  // Track current step for animations
+  let currentStep = null;
+
+  steps.forEach((step, index) => {
+    ScrollTrigger.create({
+      trigger: step,
+      start: 'top center',
+      end: 'bottom center',
+      onEnter: () => activateStep(step, index),
+      onEnterBack: () => activateStep(step, index),
+      onLeave: () => deactivateStep(step),
+      onLeaveBack: () => deactivateStep(step)
+    });
+  });
+
+  function activateStep(step, index) {
+    const stepName = step.dataset.step;
+
+    // Skip if already active
+    if (currentStep === stepName) return;
+    currentStep = stepName;
+
+    // Activate step text
+    steps.forEach(s => s.classList.remove('active'));
+    step.classList.add('active');
+
+    // Switch visualization
+    vizStates.forEach(v => v.classList.remove('active'));
+    const targetViz = document.querySelector(`.viz-${stepName}`);
+    if (targetViz) {
+      targetViz.classList.add('active');
+    }
+
+    // Update counter based on step
+    updateScrollyCounter(stepName);
+
+    // Trigger animations for this step
+    triggerStepAnimations(stepName);
+  }
+
+  function deactivateStep(step) {
+    step.classList.remove('active');
+  }
+}
+
+function updateScrollyCounter(stepName) {
+  const numberEl = document.getElementById('scrolly-number');
+  const unitEl = document.getElementById('scrolly-unit');
+
+  const hours = state.hours;
+  let value, unit;
+
+  switch (stepName) {
+    case 'daily':
+      value = hours;
+      unit = 'hours today';
+      break;
+    case 'weekly':
+      value = hours * 7;
+      unit = 'hours this week';
+      break;
+    case 'monthly':
+      value = Math.round(hours * 30);
+      unit = 'hours this month';
+      break;
+    case 'yearly':
+      value = Math.round(hours * 365);
+      unit = 'hours this year';
+      break;
+    case 'opportunity':
+      value = Math.round(hours * 365);
+      unit = 'hours to reclaim';
+      break;
+    default:
+      value = hours;
+      unit = 'hours';
+  }
+
+  // Animate the counter
+  gsap.to(numberEl, {
+    textContent: value,
+    duration: 0.8,
+    ease: 'power2.out',
+    snap: { textContent: 1 },
+    onUpdate: function() {
+      numberEl.textContent = Math.round(this.targets()[0].textContent).toLocaleString();
+    }
+  });
+
+  unitEl.textContent = unit;
+}
+
+function triggerStepAnimations(stepName) {
+  switch (stepName) {
+    case 'daily':
+      animateScrollyClock();
+      break;
+    case 'weekly':
+      animateWeekClocks();
+      break;
+    case 'monthly':
+      animateCalendarFill(1.2);
+      break;
+    case 'yearly':
+      animateYearBar();
+      break;
+    case 'opportunity':
+      // Alternatives animate via their own ScrollTriggers
+      break;
+  }
+}
+
+function animateScrollyClock() {
+  const clockFill = document.querySelector('.scrolly-clock-fill');
+  if (clockFill) {
+    clockFill.dataset.targetAngle = (state.hours / state.wakingHours) * Math.PI * 2;
+    animateMiniClockFill(clockFill, 1);
+  }
+}
+
+function animateWeekClocks() {
+  const weekClocks = document.querySelectorAll('.week-clocks-grid .mini-clock-fill');
+  weekClocks.forEach((fillPath, index) => {
+    fillPath.dataset.targetAngle = (state.hours / state.wakingHours) * Math.PI * 2;
+    animateMiniClockFill(fillPath, 0.6, index * 0.1);
+  });
+}
+
+function animateYearBar() {
+  gsap.fromTo('#year-bar-fill',
+    { width: '0%' },
+    {
+      width: `${(state.hours / state.wakingHours) * 100}%`,
+      duration: 1.2,
+      ease: 'power2.out'
+    }
+  );
 }
 
 // Animate mini-clock fill over time (not scroll-scrubbed)

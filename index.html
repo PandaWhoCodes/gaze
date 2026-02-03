@@ -83,92 +83,104 @@
           </text>
         </svg>
       </div>
+      <!-- Fallback input for mobile users who struggle with drag -->
+      <div class="clock-fallback">
+        <label class="clock-fallback-label">Or type your hours:</label>
+        <input type="number" class="clock-fallback-input" id="clock-fallback-input" min="0" max="16" step="0.5" placeholder="0">
+      </div>
       <p class="scroll-prompt">Scroll to continue</p>
     </div>
   </section>
 
-  <!-- Section 2: Daily -->
-  <section id="daily" class="section">
-    <div class="content">
-      <div class="mini-clock-container">
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-      </div>
-      <h2 class="stat-text">That's <span id="daily-hours">0</span> hours today.</h2>
-    </div>
-  </section>
-
-  <!-- Section 3: Weekly -->
-  <section id="weekly" class="section">
-    <div class="content">
-      <div class="week-clocks">
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-        <svg class="mini-clock" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
-          <path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
-        </svg>
-      </div>
-      <h2 class="stat-text"><span id="weekly-hours">0</span> hours this week.</h2>
-    </div>
-  </section>
-
-  <!-- Section 4: Monthly -->
-  <section id="monthly" class="section">
-    <div class="content">
-      <div class="calendar-grid" id="calendar-grid"></div>
-      <h2 class="stat-text"><span id="monthly-hours">0</span> hours this month.</h2>
-      <p class="stat-subtext">That's <span id="monthly-days">0</span> full days.</p>
-    </div>
-  </section>
-
-  <!-- Section 5: Yearly -->
-  <section id="yearly" class="section">
-    <div class="content">
-      <div class="year-bar-container">
-        <div class="year-bar">
-          <div class="year-bar-fill" id="year-bar-fill"></div>
+  <!-- Scrollytelling Section: Time Journey -->
+  <section id="time-journey" class="scrolly-section">
+    <div class="scrolly-graphic">
+      <!-- Sticky visualization that changes with scroll steps -->
+      <div class="scrolly-viz" id="scrolly-viz">
+        <!-- Counter display -->
+        <div class="scrolly-counter">
+          <span id="scrolly-number">0</span>
+          <span id="scrolly-unit">hours</span>
         </div>
-        <div class="year-labels">
-          <span>Jan</span>
-          <span>Dec</span>
+        <!-- Visual element container -->
+        <div class="scrolly-visual" id="scrolly-visual">
+          <!-- Daily: single clock -->
+          <div class="viz-state viz-daily active">
+            <svg class="scrolly-clock" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" />
+              <path class="scrolly-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" />
+            </svg>
+            <p class="viz-label">Today</p>
+          </div>
+          <!-- Weekly: 7 clocks -->
+          <div class="viz-state viz-weekly">
+            <div class="week-clocks-grid">
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+              <svg class="mini-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1a1a1a" stroke-width="10" /><path class="mini-clock-fill" d="" fill="none" stroke="#ff4d4d" stroke-width="10" /></svg>
+            </div>
+            <p class="viz-label">This Week</p>
+          </div>
+          <!-- Monthly: calendar -->
+          <div class="viz-state viz-monthly">
+            <div class="calendar-grid" id="calendar-grid"></div>
+            <p class="viz-label">This Month</p>
+          </div>
+          <!-- Yearly: bar -->
+          <div class="viz-state viz-yearly">
+            <div class="year-bar-container">
+              <div class="year-bar">
+                <div class="year-bar-fill" id="year-bar-fill"></div>
+              </div>
+              <div class="year-labels">
+                <span>Jan</span>
+                <span>Dec</span>
+              </div>
+            </div>
+            <p class="viz-label">This Year</p>
+          </div>
         </div>
       </div>
-      <h2 class="stat-text big"><span id="yearly-hours">0</span> hours this year.</h2>
-      <p class="stat-subtext"><span id="yearly-days">0</span> days. <span id="yearly-months">0</span> entire months.</p>
+    </div>
 
-      <!-- New Opportunity Cost Container -->
-      <div id="opportunity-cost" class="opportunity-cost-container">
+    <div class="scrolly-steps">
+      <!-- Step 1: Daily -->
+      <div class="scrolly-step" data-step="daily">
+        <h2 class="stat-text">That's <span id="daily-hours">0</span> hours today.</h2>
+        <p class="step-context">Every day, gone to the scroll.</p>
+      </div>
+
+      <!-- Step 2: Weekly -->
+      <div class="scrolly-step" data-step="weekly">
+        <h2 class="stat-text"><span id="weekly-hours">0</span> hours this week.</h2>
+        <p class="step-context">Seven days of scrolling adds up fast.</p>
+      </div>
+
+      <!-- Step 3: Monthly -->
+      <div class="scrolly-step" data-step="monthly">
+        <h2 class="stat-text"><span id="monthly-hours">0</span> hours this month.</h2>
+        <p class="stat-subtext">That's <span id="monthly-days">0</span> full days.</p>
+      </div>
+
+      <!-- Step 4: Yearly -->
+      <div class="scrolly-step" data-step="yearly">
+        <h2 class="stat-text big"><span id="yearly-hours">0</span> hours this year.</h2>
+        <p class="stat-subtext"><span id="yearly-days">0</span> days. <span id="yearly-months">0</span> entire months.</p>
+      </div>
+
+      <!-- Step 5: Opportunity Cost -->
+      <div class="scrolly-step" data-step="opportunity">
         <p class="scrolly-text">In that time, you could have:</p>
         <div class="alternatives-wrapper">
           <div class="alternative-item" id="alt-books">Read <span class="highlight">0</span> books</div>
-          <div class="alternative-item" id="alt-languages">Mastered <span class="highlight">0</span> languages</div>
-          <div class="alternative-item" id="alt-walk">Walked across <span class="highlight">0</span> countries</div>
+          <div class="alternative-item" id="alt-languages">Learned <span class="highlight">0</span> languages to conversational level</div>
+          <div class="alternative-item" id="alt-walk">Walked the <span class="highlight">Camino de Santiago</span> <span class="highlight" id="alt-camino-times">0</span> times</div>
         </div>
+        <p class="methodology-note">* Based on research - <a href="#methodology">see methodology</a></p>
       </div>
     </div>
   </section>
@@ -285,6 +297,49 @@
       <h2 class="headline final">It's not about quitting.</h2>
       <p class="stat-subtext">It's about choosing where your time goes.</p>
       <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="restart-btn">Start Over</button>
+    </div>
+  </section>
+
+  <!-- Methodology Section -->
+  <section id="methodology" class="section methodology-section">
+    <div class="content">
+      <h2 class="headline">Methodology</h2>
+      <div class="methodology-content">
+        <div class="method-item">
+          <h3>Life Expectancy</h3>
+          <p>We use <strong>77 years</strong>, the average life expectancy in the United States according to CDC data (2022). This varies by country, gender, and lifestyle factors.</p>
+          <cite>Source: <a href="https://www.cdc.gov/nchs/fastats/life-expectancy.htm" target="_blank" rel="noopener">CDC National Center for Health Statistics</a></cite>
+        </div>
+
+        <div class="method-item">
+          <h3>Waking Hours</h3>
+          <p>We assume <strong>16 waking hours per day</strong>, based on the average adult sleeping 7-9 hours. Social media time is calculated as a percentage of waking hours, not total hours.</p>
+          <cite>Source: <a href="https://www.sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need" target="_blank" rel="noopener">Sleep Foundation</a></cite>
+        </div>
+
+        <div class="method-item">
+          <h3>Books Read</h3>
+          <p>Average book length is ~90,000 words. Average reading speed is 238 words per minute. This means <strong>~6.3 hours per book</strong>. We round to 6 hours to account for focused reading.</p>
+          <cite>Source: <a href="https://www.researchgate.net/publication/332380784" target="_blank" rel="noopener">Brysbaert, M. (2019). How many words do we read per minute?</a></cite>
+        </div>
+
+        <div class="method-item">
+          <h3>Language Learning</h3>
+          <p>The US Foreign Service Institute estimates <strong>600-750 hours</strong> for Category I languages (Spanish, French, Italian) to reach "Professional Working Proficiency." We use 600 hours for conversational fluency, which is a lower bar.</p>
+          <cite>Source: <a href="https://www.state.gov/foreign-language-training/" target="_blank" rel="noopener">U.S. Department of State Foreign Language Training</a></cite>
+        </div>
+
+        <div class="method-item">
+          <h3>Walking the Camino</h3>
+          <p>The Camino Francés (most popular route) is ~800km. At a typical pace of 25km/day walking 6-8 hours, it takes <strong>~200 hours of walking</strong> over 30-35 days.</p>
+          <cite>Source: <a href="https://oficinadelperegrino.com/en/pilgrimage/the-camino/" target="_blank" rel="noopener">Pilgrim's Office of Santiago</a></cite>
+        </div>
+
+        <div class="method-item">
+          <h3>Limitations</h3>
+          <p>This visualization assumes consistent daily usage over remaining lifetime. It doesn't account for: productive social media use, usage changes with age, or time that might be spent on other passive activities instead. The goal is awareness, not precision.</p>
+        </div>
+      </div>
     </div>
   </section>
 

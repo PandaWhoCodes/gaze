@@ -18,6 +18,8 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  /* --vh is set via JS to handle mobile browser nav bar resizing */
+  --vh: 1vh;
 }
 
 body {
@@ -32,7 +34,8 @@ body {
 
 /* Sections */
 .section {
-  min-height: 100vh;
+  min-height: 100vh; /* Fallback */
+  min-height: calc(var(--vh, 1vh) * 100);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,6 +160,64 @@ body {
 
 #clock:active .handle {
   cursor: grabbing;
+}
+
+/* Larger touch target on mobile */
+@media (max-width: 600px) {
+  .handle {
+    r: 28; /* Larger radius for easier touch */
+  }
+}
+
+/* Mobile fallback input for clock */
+.clock-fallback {
+  display: none;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .clock-fallback {
+    display: block;
+  }
+}
+
+.clock-fallback-label {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.clock-fallback-input {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  width: 120px;
+  text-align: center;
+  background: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 8px;
+  color: var(--text);
+  padding: 0.75rem;
+  transition: border-color 0.3s ease;
+}
+
+.clock-fallback-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Touch-friendly slider styling */
+@media (max-width: 600px) {
+  #reclaim-slider::-webkit-slider-thumb {
+    width: 40px;
+    height: 40px;
+  }
+
+  #reclaim-slider::-moz-range-thumb {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Scroll prompt */
@@ -734,4 +795,258 @@ body {
   color: var(--text);
   border-color: var(--text);
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   SCROLLYTELLING SECTION (Pudding-style)
+   ============================================ */
+
+.scrolly-section {
+  position: relative;
+  display: flex;
+  padding: 0;
+  min-height: auto;
+}
+
+/* Sticky graphic container - left side on desktop */
+.scrolly-graphic {
+  position: sticky;
+  top: 0;
+  width: 50%;
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 1;
+}
+
+.scrolly-viz {
+  text-align: center;
+  padding: 2rem;
+}
+
+.scrolly-counter {
+  margin-bottom: 2rem;
+}
+
+#scrolly-number {
+  font-size: clamp(4rem, 10vw, 8rem);
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  line-height: 1;
+}
+
+#scrolly-unit {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Visualization states - only one visible at a time */
+.scrolly-visual {
+  position: relative;
+  min-height: 200px;
+}
+
+.viz-state {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.viz-state.active {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+  left: 0;
+  transform: none;
+}
+
+.viz-label {
+  margin-top: 1rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Scrolly clock (daily) */
+.scrolly-clock {
+  width: 150px;
+  height: 150px;
+}
+
+/* Week clocks grid */
+.week-clocks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+.week-clocks-grid .mini-clock {
+  width: 50px;
+  height: 50px;
+}
+
+.week-clocks-grid .mini-clock:last-child {
+  grid-column: 2 / 4;
+  justify-self: center;
+}
+
+/* Scrolling steps container - right side */
+.scrolly-steps {
+  width: 50%;
+  padding: 0 4rem;
+}
+
+.scrolly-step {
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 0;
+  opacity: 0.3;
+  transition: opacity 0.5s ease;
+}
+
+.scrolly-step.active {
+  opacity: 1;
+}
+
+.step-context {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+.methodology-note {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.methodology-note a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.methodology-note a:hover {
+  text-decoration: underline;
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 768px) {
+  .scrolly-section {
+    flex-direction: column;
+  }
+
+  .scrolly-graphic {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 50vh;
+    height: calc(var(--vh, 1vh) * 50);
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .scrolly-steps {
+    width: 100%;
+    padding: 0 1.5rem;
+  }
+
+  .scrolly-step {
+    min-height: 60vh;
+    min-height: calc(var(--vh, 1vh) * 60);
+    padding: 2rem 0;
+  }
+
+  #scrolly-number {
+    font-size: clamp(3rem, 15vw, 5rem);
+  }
+
+  .scrolly-clock {
+    width: 100px;
+    height: 100px;
+  }
+
+  .week-clocks-grid {
+    max-width: 180px;
+  }
+
+  .week-clocks-grid .mini-clock {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* ============================================
+   METHODOLOGY SECTION
+   ============================================ */
+
+.methodology-section {
+  min-height: auto;
+  padding: 6rem 2rem;
+  background: #0d0d0d;
+}
+
+.methodology-section .content {
+  max-width: 700px;
+  text-align: left;
+}
+
+.methodology-section .headline {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.methodology-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.method-item h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.method-item p {
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 0.5rem;
+}
+
+.method-item strong {
+  color: var(--accent);
+}
+
+.method-item cite {
+  font-size: 0.85rem;
+  font-style: normal;
+  color: #555;
+}
+
+.method-item cite a {
+  color: #666;
+  text-decoration: none;
+}
+
+.method-item cite a:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
